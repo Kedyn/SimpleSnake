@@ -1,138 +1,129 @@
-/*
- Dependencies:
- */
-import {InputHandler} from "./InputHandler";
-import {KEYCODE} from "./KeyCode";
-import {Vector2D} from "./Vector2D";
-import {GameSceneManager} from "./GameSceneManager";
-import {GameScene} from "./GameScene";
+import { SimpleSceneManager } from './SceneManager';
+import { VERSION, SECOND } from "./Tools/constants";
 
-/*
- Constants
- */
-const SECOND: number = 1000; //in milliseconds
-
-class Game {
-    /*
-     * constructor: constructs the game instance
-     * @game_id: string, a game ID used for debugging purposes.
-     * @canvas: HTMLCanvasElement, the canvas element that you wish your game to be drawn on.
-     */
-    public constructor(private game_id: string, public canvas: HTMLCanvasElement) {
-        let callbacks = {
-            "onKeyDown": this.onKeyDown,
-            "onKeyUp": this.onKeyUp,
-            "onMouseMove": this.onMouseMove,
-            "onMouseDown": this.onMouseDown,
-            "onMouseUp": this.onMouseUp
-        };
-        this.frame_rate = 60;
-        let time = new Date();
-        this.frame_counter = 0;
-        this.last_time = time.getTime();
-        this.input_handler = new InputHandler(this.canvas, callbacks);
-        this.scene_manager = new GameSceneManager();
-    }
-
-    /*
-     * init: initializes the game loop.
-     * No parameters
-     */
-    public init(): void {
-        requestAnimationFrame(this.animate);
-    }
-
-    /*
-     * frameRate: sets frame rate.
-     * @frame_rate: number, the number of frames per second.
-     */
-    public frameRate(frame_rate) {
-        this.frame_rate = frame_rate;
-    }
-
-    /*
-     * inputHandler: returns the current input handler.
-     */
-    public inputHandler(): InputHandler {
-        return this.input_handler;
-    }
-
-    /*
-     * Input Handler functions:
-     */
-
-    public isKeyDown(key: KEYCODE): boolean {
-        return this.input_handler.isKeyDown(key);
-    }
-
-    public mousePos(): Vector2D {
-        return this.input_handler.mousePos();
-    }
-
-    public isMouseButtonDown(button: number): boolean {
-        return this.input_handler.isMouseButtonDown(button);
-    }
-
-    /*
-     * Game Scene Manager functions:
-     */
-
-    public pushScene(scene: GameScene): void {
-        this.scene_manager.pushScene(scene);
-    }
-
-    public changeScene(scene: GameScene): void {
-        this.scene_manager.changeScene(scene);
-    }
-
-    public popScene(): void {
-        this.scene_manager.popScene();
-    }
-
-    private frame_rate: number;
-    private frame_counter: number;
-    private last_time: number;
-    private input_handler: InputHandler;
-    private scene_manager: GameSceneManager;
-
-    /*
-     * Game Loop
-     */
-    private animate = (): void => {
-        let time = new Date();
-        let elapse = time.getTime() - this.last_time;
-        let interval = SECOND / this.frame_rate;
-        if (elapse > interval) {
-            this.scene_manager.update();
-            this.scene_manager.render();
-            this.last_time = time.getTime() - (elapse % interval);
-        }
-        requestAnimationFrame(this.animate);
-    };
-
-    /*
-     * The following are input handler callbacks
-     */
-
-    private onKeyDown = (key: KEYCODE): void => {
-        this.scene_manager.onKeyDown(key);
-    };
-
-    private onKeyUp = (key: KEYCODE): void => {
-        this.scene_manager.onKeyUp(key);
-    };
-
-    private onMouseMove = (pos: Vector2D): void => {
-        this.scene_manager.onMouseMove(pos);
-    };
-
-    private onMouseDown = (button: number, pos: Vector2D): void => {
-        this.scene_manager.onMouseDown(button, pos);
-    };
-
-    private onMouseUp = (button: number, pos: Vector2D): void => {
-        this.scene_manager.onMouseUp(button, pos);
-    };
+interface GameOptions {
+    title?: string,
+    frame_rate?: number,
+    debug_mode?: boolean,
+    canvas?: {
+        id: string,
+        width?: number,
+        height?: number,
+    },
+    version?: string
 }
 
-export {Game};
+const DEFAULT_GAME_OPTIONS: GameOptions = {
+    title: "Simple Game",
+    frame_rate: 60,
+    debug_mode: true,
+    canvas: {
+        id: "SimpleGame",
+        width: 960,
+        height: 540
+    },
+    version: VERSION
+}
+
+class Game {
+    public static GetInstance(): Game {
+        if (!Game.instance) {
+            Game.instance = new Game();
+        }
+        return Game.instance;
+    }
+
+    public create(options?: GameOptions): boolean {
+        if (options) this.checkOptions(options);
+        else this.options = DEFAULT_GAME_OPTIONS;
+
+        if (this.checkCanvas()) {            
+            this.time = new Date();
+
+            this.frame_counter = 0;
+            this.last_frame_time = this.time.getTime();
+
+            this.log("Game creation successful");
+            return true;
+        }
+        else {
+            this.log("Game creation failed");
+            return false;
+        }
+    }
+
+    public init(): boolean {
+        if (SimpleSceneManager.currentScene()) {
+            requestAnimationFrame(this.animate);
+            this.log("Initiating game animation");
+            return true;
+        }
+        else {
+            this.log("Failed to initialize game [no game scene]");
+            return false;
+        }
+    }
+
+    public getCanvas(): HTMLCanvasElement {
+        return this.canvas;
+    }
+
+    public log(message: string): void {
+        if (this.options.debug_mode) console.log(this.options.title+": "+message+"...");
+    }
+
+    private static instance: Game;
+
+    private options: GameOptions;
+    private canvas: HTMLCanvasElement;
+    private time: Date;
+    private frame_counter: number;
+    private last_frame_time: number;
+
+    private constructor() {}    
+
+    private checkOptions(options: GameOptions): void {
+        if (!options.title) options.title = DEFAULT_GAME_OPTIONS.title;
+        if (!options.frame_rate) options.frame_rate = DEFAULT_GAME_OPTIONS.frame_rate;
+        if (!options.debug_mode) options.debug_mode = DEFAULT_GAME_OPTIONS.debug_mode;
+        if (!options.canvas) options.canvas = DEFAULT_GAME_OPTIONS.canvas;
+        else {
+            if (!options.canvas.id) options.canvas.id = DEFAULT_GAME_OPTIONS.canvas.id;
+            if (!options.canvas.width) options.canvas.width = DEFAULT_GAME_OPTIONS.canvas.width;
+            if (!options.canvas.height) options.canvas.height = DEFAULT_GAME_OPTIONS.canvas.height;
+        }
+        this.options = options;
+    }
+
+    private checkCanvas(): boolean {
+        let canvas = document.getElementById(this.options.canvas.id);
+        if (!canvas) {
+            canvas = document.createElement("canvas");
+            (<HTMLCanvasElement>canvas).width = this.options.canvas.width;
+            (<HTMLCanvasElement>canvas).height = this.options.canvas.height;
+            document.getElementsByTagName("body")[0].insertBefore(canvas, document.body.firstChild);
+        }
+        if (canvas.tagName === "CANVAS") {
+            this.canvas = <HTMLCanvasElement>canvas;
+            return true;
+        }
+        return false;
+    }
+
+    private animate(): void {
+        let time     = new Date();
+        let elapse   = time.getTime() - SimpleGame.last_frame_time;
+        let interval = SECOND / SimpleGame.options.frame_rate;
+
+        if (elapse > interval) {
+            SimpleSceneManager.update(elapse);
+            SimpleSceneManager.render(elapse);
+
+            SimpleGame.last_frame_time = time.getTime() - (elapse % interval);
+        }
+
+        requestAnimationFrame(SimpleGame.animate);
+    }
+}
+
+export const SimpleGame: Game = Game.GetInstance();

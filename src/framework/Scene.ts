@@ -1,27 +1,32 @@
+import { SimpleGame } from './Game';
 import { KEYCODE } from './Tools/KeyCode';
-import { MOUSE_BUTTON } from "./Tools/constants";
+import { GameObject } from './GameObject';
+import { MOUSE_BUTTON } from './Tools/constants';
 
+export abstract class Scene {
+    public game_objects: GameObject[];
 
-export abstract class GameObject {
-    public constructor(public x: number, public y: number, public width: number, public height: number) {
-
+    public constructor(public id: string) {
+        SimpleGame.log(`Creating ${id} scene...`);
+        this.game_objects = [];
     }
 
-    public abstract update(): void;
-    public abstract render(): void;
+    public update(elapse_time: number): void {}
+
+    public render(elapse_time: number): void {}
 
     public onEnter(): boolean {
         return true;
     }
 
     public onKeyDown(key: KEYCODE): void {}
-    
+
     public onKeyUp(key: KEYCODE): void {}
-    
+
     public onMouseMove(x: number, y: number): void {}
-    
+
     public onMouseDown(button: MOUSE_BUTTON, x: number, y: number): void {}
-    
+
     public onMouseUp(button: MOUSE_BUTTON, x: number, y: number): void {}
 
     public onExit(): boolean {

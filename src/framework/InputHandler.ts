@@ -1,141 +1,178 @@
-/*
- Dependencies:
- */
-import {Vector2D} from "./Vector2D";
-import {KEYCODE} from "./KeyCode";
+import { INPUT_TYPE } from './Tools/constants';
+import { KEYCODE } from './Tools/KeyCode';
+import { MOUSE_BUTTON } from "./Tools/constants";
+import { SimpleGame } from './Game';
+
+interface mouse_callbacks {
+    onKeyDown:   Array<any>;
+    onKeyUp:     Array<any>;
+    onMouseMove: Array<any>;
+    onMouseDown: Array<any>;
+    onMouseUp:   Array<any>;
+}
 
 class InputHandler {
-    /*
-     Public:
-    */
+    public static GetInstance(): InputHandler {
+        if (!InputHandler.instance) {
+            InputHandler.instance = new InputHandler();
+        }
 
-    /*
-     * constructor: constructs the input handler instance
-     * @canvas: HTMLCanvasElement, the canvas element that you wish your game to be drawn on.
-     * @callbacks: Callback Functions array, array of callbacks for events.
-     *             Current callbacks:
-     *             "onKeyDown"   : emitted when a key is pressed
-     *             "onKeyUp"     : emitted when a key is released
-     *             "onMouseMove" : emitted when the mouse is moved
-     *             "onMouseDown" : emitted when a mouse button is pressed
-     *             "onMouseUp"   : emitted when a mouse button is released
-     */
-    public constructor(private canvas: HTMLCanvasElement, private callbacks: any) {
-        //Adding event listeners for canvas
-        canvas.tabIndex = 0;
-        canvas.addEventListener("keydown",this.onKeyDown,false);
-        canvas.addEventListener("keyup",this.onKeyUp,false);
-        canvas.addEventListener("mousemove",this.onMouseMove,false);
-        canvas.addEventListener("mousedown",this.onMouseDown,false);
-        canvas.addEventListener("mouseup",this.onMouseUp,false);
-        canvas.onclick = function (ev: MouseEvent) { return false; };
-        canvas.oncontextmenu = function (ev: PointerEvent){ return false; };
-        canvas.onwheel = function (ev: WheelEvent) { return false; };
-        canvas.focus();
+        return InputHandler.instance;
+    }
 
-        //populating arrays
+    public listen(type: INPUT_TYPE, callback: any): void {
+        if (!this.initiated) {
+            this.init();
+        }
+
+        if (type == INPUT_TYPE.KEYDOWN) {
+            this.callbacks.onKeyDown.push(callback);
+        }
+        else if (type == INPUT_TYPE.KEYUP) {
+            this.callbacks.onKeyUp.push(callback);
+        }
+        else if (type == INPUT_TYPE.MOUSE_MOVE) {
+            this.callbacks.onMouseMove.push(callback);
+        }
+        else if (type == INPUT_TYPE.MOUSE_DOWN) {
+            this.callbacks.onMouseDown.push(callback);
+        }
+        else if (type == INPUT_TYPE.MOUSE_UP) {
+            this.callbacks.onMouseUp.push(callback);
+        }
+    }
+
+    public removeListens(): void {
+        this.resetCallbacks();
+    }
+
+    public isKeyDown(key: KEYCODE): boolean {
+        if (this.keys[key]) {
+            return this.keys[key];
+        }
+
+        return false;
+    }
+
+    public mousePos(): { x: number, y: number } {
+        return this.mouse_pos;
+    }
+
+    public isMouseButtonDown(button: MOUSE_BUTTON): boolean {
+        if (this.mouse_buttons[button]) {
+            return this.mouse_buttons[button];
+        }
+
+        return false;
+    }
+
+    private static instance: InputHandler;
+
+    private keys:          boolean[];
+    private mouse_buttons: boolean[];
+    private mouse_pos:     { x: number, y: number };
+    private callbacks:     mouse_callbacks;
+    private initiated:     boolean;
+
+    private constructor() {
+        this.keys          = [];
+        this.mouse_buttons = [];
+
+        this.resetCallbacks();
+
         for (let key in KEYCODE) {
-            let int = parseInt(key,10);
+            let int = parseInt(key, 10);
             if (!isNaN(int)) {
                 this.keys[int] = false;
             }
         }
 
-        for (let i = 0; i < 10; i++) {
-            this.mouse_buttons[i] = false;
-        }
+        this.mouse_buttons[MOUSE_BUTTON.LEFT] = false;
+        this.mouse_buttons[MOUSE_BUTTON.MIDDLE] = false;
+        this.mouse_buttons[MOUSE_BUTTON.RIGHT] = false;
+        
+        this.mouse_pos = { x: 0, y: 0 };
 
-        this.mouse_pos = new Vector2D(0,0);
+        this.initiated = false;
     }
 
-    /*
-     * isKeyDown: returns true if a "key" (KEYCODE) has been pressed, returns false otherwise
-     * @key: KEYCODE, the key you wish to know if the key is down.
-     */
-    public isKeyDown(key: KEYCODE): boolean {
-        if (this.keys[key]) {
-            return this.keys[key];
-        }
-        return false;
+    private init(): void {
+        SimpleGame.getCanvas().tabIndex = 0;
+
+        SimpleGame.getCanvas().addEventListener("keydown",   this.onKeyDown,   false);
+        SimpleGame.getCanvas().addEventListener("keyup",     this.onKeyUp,     false);
+        SimpleGame.getCanvas().addEventListener("mousemove", this.onMouseMove, false);
+        SimpleGame.getCanvas().addEventListener("mousedown", this.onMouseDown, false);
+        SimpleGame.getCanvas().addEventListener("mouseup",   this.onMouseUp,   false);
+
+        SimpleGame.getCanvas().onclick       = (ev: MouseEvent)   => { return false; };
+        SimpleGame.getCanvas().oncontextmenu = (ev: PointerEvent) => { return false; };
+        SimpleGame.getCanvas().onwheel       = (ev: WheelEvent)   => { return false; };
+
+        SimpleGame.getCanvas().focus();
+
+        this.initiated = true;
+
+        SimpleGame.log("Input Handler initiated...");
     }
 
-    /*
-     * mousePos: returns a Vector2D with the mouse position
-     * no parameters
-     */
-    mousePos(): Vector2D {
-        return this.mouse_pos;
+    private resetCallbacks(): void {
+        this.callbacks = {
+            onKeyDown  :  [],
+            onKeyUp    :  [],
+            onMouseMove:  [],
+            onMouseDown:  [],
+            onMouseUp  :  []
+        };
     }
 
-    /*
-     * isMouseButtonDown: returns true if a mouse button is pressed, false otherwise
-     * @button: number, the mouse button you want to check
-     *          Currently it can store up to 10 mouse buttons.
-     *          0 is usually the left button
-     *          1 is usually the mid button
-     *          2 is usaully the right button
-     */
-    isMouseButtonDown(button: number): boolean {
-        if (this.mouse_buttons[button]) {
-            return this.mouse_buttons[button];
-        }
-        return false;
-    }
-
-    /*
-     Private:
-     */
-
-    private keys: boolean[] = [];
-    private mouse_buttons: boolean[] = [];
-    private mouse_pos: Vector2D;
-
-    //functions:
-
-    /*
-     * The following are function callbacks for events
-     */
-
-    private onKeyDown = (ev: KeyboardEvent): void => {
+    private onKeyDown(ev: KeyboardEvent): void {
         ev.preventDefault();
-        this.keys[ev.keyCode] = true;
-        if (this.callbacks["onKeyDown"]) {
-            this.callbacks["onKeyDown"](ev.keyCode);
-        }
-    };
+        SimpleInputHandler.keys[ev.keyCode] = true;
 
-    private onKeyUp = (ev: KeyboardEvent): void => {
-        this.keys[ev.keyCode] = false;
-        if (this.callbacks['onKeyUp']) {
-            this.callbacks['onKeyUp'](ev.keyCode);
+        for (let callback of SimpleInputHandler.callbacks["onKeyDown"]) {
+            callback(ev.keyCode);
         }
-    };
+    }
 
-    private onMouseMove = (ev: MouseEvent): void => {
+    private onKeyUp(ev: KeyboardEvent): void {
+        SimpleInputHandler.keys[ev.keyCode] = false;
+
+        for (let callback of SimpleInputHandler.callbacks["onKeyUp"]) {
+            callback(ev.keyCode);
+        }
+    }
+
+    private onMouseMove(ev: MouseEvent): void {
         let x: number = ev.pageX;
         let y: number = ev.pageY;
-        x -= this.canvas.offsetLeft;
-        y -= this.canvas.offsetTop;
-        this.mouse_pos.x = x;
-        this.mouse_pos.y = y;
-        if (this.callbacks["onMouseMove"]) {
-            this.callbacks["onMouseMove"](this.mouse_pos);
-        }
-    };
 
-    private onMouseDown = (ev: MouseEvent): void => {
-        this.mouse_buttons[ev.button] = true;
-        if (this.callbacks["onMouseDown"]) {
-            this.callbacks["onMouseDown"](ev.button,this.mouse_pos);
-        }
-    };
+        x -= SimpleGame.getCanvas().offsetLeft;
+        y -= SimpleGame.getCanvas().offsetTop;
 
-    private onMouseUp = (ev: MouseEvent): void => {
-        this.mouse_buttons[ev.button] = false;
-        if (this.callbacks["onMouseUp"]) {
-            this.callbacks["onMouseUp"](ev.button,this.mouse_pos);
+        SimpleInputHandler.mouse_pos.x = x;
+        SimpleInputHandler.mouse_pos.y = y;
+
+        for (let callback of SimpleInputHandler.callbacks["onMouseMove"]) {
+            callback(SimpleInputHandler.mouse_pos);
         }
-    };
+    }
+
+    private onMouseDown(ev: MouseEvent): void {
+        SimpleInputHandler.mouse_buttons[ev.button] = true;
+        
+        for (let callback of SimpleInputHandler.callbacks["onMouseDown"]) {
+            callback(ev.button, SimpleInputHandler.mouse_pos);
+        }
+    }
+
+    private onMouseUp(ev: MouseEvent): void {
+        SimpleInputHandler.mouse_buttons[ev.button] = false;
+
+        for (let callback of SimpleInputHandler.callbacks["onMouseUp"]) {
+            callback(ev.button, SimpleInputHandler.mouse_pos);
+        }
+    }
 }
 
-export {InputHandler};
+export const SimpleInputHandler: InputHandler = InputHandler.GetInstance();

@@ -1,26 +1,34 @@
 {
-  "name": "simple-snake",
-  "version": "1.0.0",
+  "name": "simplesnake",
+  "version": "0.1.0",
   "description": "HTML5 Classic Snake Game Remake.",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "gulp"
   },
   "keywords": [
-    "Kedyn",
-    "Macedonio",
+    "simple",
+    "game",
+    "framework",
+    "typescript",
+    "javascript",
+    "canvas",
     "Snake",
     "Game"
   ],
   "author": "Kedyn Macedonio",
+  "bugs": {
+    "url": "https://github.com/Kedyn/simpleSnake/issues"
+  },
+  "homepage": "https://github.com/Kedyn/simpleSnake#readme",
   "license": "MIT",
-  "devDependencies": {
-    "browserify": "^13.1.1",
+  "dependencies": {
+    "browserify": "^14.5.0",
     "gulp": "^3.9.1",
-    "gulp-sourcemaps": "^2.2.0",
-    "gulp-uglify": "^2.0.0",
-    "tsify": "^2.0.2",
-    "typescript": "^2.0.9",
+    "gulp-sourcemaps": "^2.6.1",
+    "gulp-uglify": "^3.0.0",
+    "tsify": "^3.0.3",
+    "typescript": "^2.6.1",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0"
   }

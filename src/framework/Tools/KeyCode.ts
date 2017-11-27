@@ -1,4 +1,4 @@
-enum KEYCODE {
+export enum KEYCODE {
     BACKSPACE = 8,
     TAB = 9,
     ENTER = 13,
@@ -99,5 +99,3 @@ enum KEYCODE {
     CLOSE_BRACKET = 221,
     SINGLE_QUOTE = 222
 }
-
-export {KEYCODE}
