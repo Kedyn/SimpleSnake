@@ -52,21 +52,41 @@ export class GameScene extends Scene {
             this.grow = false;
             let x = 0;
             let y = 0;
+            let head = this.snake[this.snake.length - 1];            
             switch (this.direction) {
                 case DIRECTION.LEFT:
-                    x -= CELL_SIZE;
+                    if (head.x == 0) {
+                        x = this.cols * CELL_SIZE;
+                    }
+                    else {
+                        x -= CELL_SIZE;
+                    }
                     break;
                 case DIRECTION.UP:
-                    y -= CELL_SIZE;
+                    if (head.y == 0) {
+                        y = this.rows * CELL_SIZE;
+                    }
+                    else {
+                        y -= CELL_SIZE;
+                    }
                     break;
                 case DIRECTION.RIGHT:
-                    x += CELL_SIZE;
+                    if (head.x == this.cols * CELL_SIZE - CELL_SIZE) {
+                        x -= this.cols * CELL_SIZE;
+                    }
+                    else {
+                        x = CELL_SIZE;
+                    }
                     break;
                 case DIRECTION.DOWN:
-                    y += CELL_SIZE;
+                    if (head.y == this.rows * CELL_SIZE - CELL_SIZE) {
+                        y -= this.rows * CELL_SIZE;
+                    }
+                    else {
+                        y = CELL_SIZE;
+                    }
                     break;
             }
-            let head = this.snake[this.snake.length - 1];
             let new_x = head.x + x;
             let new_y = head.y + y;
             if (this.isPointInSnake({x: new_x, y: new_y})) {
